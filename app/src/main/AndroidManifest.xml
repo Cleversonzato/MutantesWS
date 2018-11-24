@@ -9,13 +9,29 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".SplashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".Cadastro"
+            android:label="@string/title_activity_cadastro"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".Editar" />
+        <activity
+            android:name=".Listar"
+            android:label="@string/title_activity_listar"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".Pesquisar"
+            android:label="@string/title_activity_pesquisar"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
