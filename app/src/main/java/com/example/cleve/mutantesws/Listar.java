@@ -3,6 +3,7 @@ package com.example.cleve.mutantesws;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -37,6 +38,7 @@ public class Listar extends ListActivity {
                 Intent it = new Intent(getApplicationContext(), Editar.class);
                 Bundle mut = new Bundle();
                 mut.putString("nome", mutante.getNome());
+                mut.putParcelable("foto", mutante.getFoto());
                 it.putExtras(mut);
                 startActivityForResult(it, 1);
             }
@@ -50,7 +52,7 @@ public class Listar extends ListActivity {
         if(mutantes.size() > 0){
             setListAdapter(this.mt);
         }
-        this.mt.novosDados(mutantes);
+
         this.listarMutantes();
 
     }
@@ -66,14 +68,23 @@ public class Listar extends ListActivity {
         StringRequest request = new StringRequest(StringRequest.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                String[] parts = response.split("\\r?\\n");
-                Mutante mutante;
-                for(String p: parts) {
-                    mutante = new Mutante();
-                    mutante.setNome(p);
-                    mutantes.add(mutante);
+                if(!response.isEmpty()) {
+                    String[] parts = response.split("\\n~");
+                    String[] parts2;
+                    Mutante mutante;
+                    for (String p : parts) {
+                        parts2 = p.split(" ; ",2);
+                        mutante = new Mutante();
+                        mutante.setNome(parts2[0]);
+                        mutante.setFoto(parts2[1]);
+                        mutantes.add(mutante);
+                    }
+                    tempMT.novosDados(mutantes);
                 }
-                tempMT.novosDados(mutantes);
+                else{
+                    Mutante mutante = null;
+                    tempMT.novosDados(mutantes);
+                }
             }
         }, new Response.ErrorListener() {
             @Override

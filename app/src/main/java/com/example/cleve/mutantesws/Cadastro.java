@@ -2,23 +2,35 @@ package com.example.cleve.mutantesws;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Cadastro extends AppCompatActivity {
 
@@ -26,6 +38,7 @@ public class Cadastro extends AppCompatActivity {
     private int cont = 1;
     private EditText parent;
     private ConstraintLayout layout;
+    private ImageView foto;
 
 
     @Override
@@ -34,6 +47,8 @@ public class Cadastro extends AppCompatActivity {
         setContentView(R.layout.activity_cadastro);
         this.parent =(EditText) findViewById(R.id.poderes);
         this.layout = (ConstraintLayout) findViewById(R.id.CLayout);
+
+        this.foto= (ImageView) findViewById(R.id.foto);
     }
 
     public void adicionarCampo(View view){
@@ -59,7 +74,6 @@ public class Cadastro extends AppCompatActivity {
         cs.applyTo(this.layout);
 
         this.parent = et;
-
     }
 
     public void removerCampo(View view){
@@ -74,7 +88,13 @@ public class Cadastro extends AppCompatActivity {
             }
             cont--;
         }
+    }
 
+    public void foto(View view){
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), 1);
     }
 
     public void adicionar(View view){
@@ -85,6 +105,13 @@ public class Cadastro extends AppCompatActivity {
         if(mutante.getNome().isEmpty()){
             vazio = true;
         }
+
+        //imagem
+        Bitmap bm= ((BitmapDrawable)foto.getDrawable()).getBitmap();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bm.compress(Bitmap.CompressFormat.PNG, 50, outputStream);
+        byte[] b = outputStream.toByteArray();
+        final String img=  Base64.encodeToString(b, Base64.DEFAULT);
 
         List<String> poderes = new ArrayList();
         TextView poder = (TextView) findViewById(R.id.poderes);
@@ -108,13 +135,16 @@ public class Cadastro extends AppCompatActivity {
 
             RequestQueue filaRequest = Volley.getInstancia(this).getFilaRequest();
             final Context contexto = this;
-            String url = Volley.URL + "?operacao=adicionar&nome="+mutante.getNome()+"&habilidades=";
-            for(String h: mutante.getPoderes()){
-                url += h+',';
-            }
-            url += "&foto=teste"+"&usuario="+Volley.usuario;
 
-            StringRequest request = new StringRequest(StringRequest.Method.GET, url, new Response.Listener<String>() {
+            final String mutNome = mutante.getNome();
+            String hab ="";
+            for(String h: mutante.getPoderes()){
+                hab += h+',';
+            }
+            final String habilidades = hab;
+            final String usr= Volley.usuario;
+
+            StringRequest request = new StringRequest(StringRequest.Method.POST, Volley.URL, new Response.Listener<String>() {
                 @Override
                 public void onResponse(String response) {
                     if(response.equals("1")) {
@@ -130,10 +160,37 @@ public class Cadastro extends AppCompatActivity {
                     android.widget.Toast.makeText(contexto, "Falha na conexão", Toast.LENGTH_LONG).show();
                     android.widget.Toast.makeText(contexto, erro.toString(), Toast.LENGTH_LONG).show();
                 }
-            });
-
+            }){
+                @Override
+                protected Map<String, String> getParams(){
+                    Map<String, String> params = new HashMap<String, String>();
+                    params.put("operacao", "adicionar");
+                    params.put("nome", mutNome);
+                    params.put("habilidades", habilidades);
+                    params.put("foto", img);
+                    params.put("usuario", usr);
+                    return params;
+                }
+            };
             filaRequest.add(request);
 
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+      //  super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+
+            Uri uri = data.getData();
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                ImageView temp = this.foto;
+                this.foto.setImageBitmap(bitmap);
+            } catch(IOException e){
+                e.printStackTrace();
+            }
         }
     }
 

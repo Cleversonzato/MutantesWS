@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.cleve.mutantesws.Mutante;
@@ -51,6 +52,7 @@ public abstract class MutantesAdapter extends BaseAdapter {
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         View view = this.inflater.inflate(R.layout.item_mutante, null);
+        ((ImageView)(view.findViewById(R.id.foto))).setImageBitmap(mutantes.get(position).getFoto());
         ((TextView)(view.findViewById(R.id.nome))).setText(mutantes.get(position).getNome());
         ((ImageButton)(view.findViewById(R.id.mais))).setOnClickListener(new View.OnClickListener(){
             @Override
