@@ -2,6 +2,7 @@ package com.example.cleve.mutantesws;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
@@ -11,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +37,7 @@ public class Editar extends AppCompatActivity {
     private EditText parent;
     private ConstraintLayout layout;
     private String nomeAnterior;
+    private ImageView foto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +50,8 @@ public class Editar extends AppCompatActivity {
         Bundle mut = it.getExtras();
         TextView nome = (EditText) findViewById(R.id.nome);
         nomeAnterior = (mut.getString("nome"));
+        this.foto = (ImageView) findViewById(R.id.foto);
+        this.foto.setImageBitmap((Bitmap) mut.getParcelable("foto"));
         nome.setText(nomeAnterior);
 
 
