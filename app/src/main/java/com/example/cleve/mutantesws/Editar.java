@@ -107,19 +107,18 @@ public class Editar extends AppCompatActivity {
 
             RequestQueue filaRequest = Volley.getInstancia(this).getFilaRequest();
             final Context contexto = this;
-            String url = Volley.URL + "?operacao=atualizar&nome="+mutante.getNome()+"&anterior="+this.nomeAnterior+"&habilidades=[";
+            String url = Volley.URL + "?operacao=atualizar&nome="+mutante.getNome()+"&anterior="+this.nomeAnterior+"&habilidades=";
             for(String h: mutante.getPoderes()){
                 url += h+',';
             }
-            url += "] &foto=temp&usuario="+Volley.usuario;
+            url += "&foto=temp&usuario="+Volley.usuario;
 
             StringRequest request = new StringRequest(StringRequest.Method.GET, url, new Response.Listener<String>() {
                 @Override
                 public void onResponse(String response) {
-                    if(response.equals(1)) {
-                        android.widget.Toast.makeText(contexto, "Atualizado com sucesso", Toast.LENGTH_LONG).show();
-                        ((Editar) contexto).nomeAnterior = ((Editar) contexto).mutante.getNome();
-                    }
+                    android.widget.Toast.makeText(contexto, "Atualizado com sucesso", Toast.LENGTH_LONG).show();
+                    ((Editar) contexto).nomeAnterior = ((Editar) contexto).mutante.getNome();
+                    ((Editar) contexto).setResult(1);
                 }
             }, new Response.ErrorListener() {
                 @Override
