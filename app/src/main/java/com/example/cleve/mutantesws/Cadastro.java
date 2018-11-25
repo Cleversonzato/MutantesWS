@@ -1,5 +1,7 @@
 package com.example.cleve.mutantesws;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
@@ -8,6 +10,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -81,6 +88,9 @@ public class Cadastro extends AppCompatActivity {
 
         List<String> poderes = new ArrayList();
         TextView poder = (TextView) findViewById(R.id.poderes);
+        if(poder.getText().toString().isEmpty()){
+            vazio = true;
+        }
         poderes.add(poder.getText().toString());
 
         for(int i = 2; i <= cont; i++){
@@ -95,15 +105,35 @@ public class Cadastro extends AppCompatActivity {
         if(vazio){
             Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_LONG).show();
         }else {
-            OpsBD bd = new OpsBD(this);
-            try {
-                bd.open();
-                bd.addMutante(mutante, this);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                bd.close();
+
+            RequestQueue filaRequest = Volley.getInstancia(this).getFilaRequest();
+            final Context contexto = this;
+            String url = Volley.URL + "?operacao=adicionar&nome="+mutante.getNome()+"&habilidades=";
+            for(String h: mutante.getPoderes()){
+                url += h+',';
             }
+            url += "&foto=teste"+"&usuario="+Volley.usuario;
+
+            StringRequest request = new StringRequest(StringRequest.Method.GET, url, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    if(response.equals("1")) {
+                        android.widget.Toast.makeText(contexto, "Adicionado com sucesso", Toast.LENGTH_LONG).show();
+                    }
+                    else{
+                        android.widget.Toast.makeText(contexto, "Mutante já cadastrado", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError erro) {
+                    android.widget.Toast.makeText(contexto, "Falha na conexão", Toast.LENGTH_LONG).show();
+                    android.widget.Toast.makeText(contexto, erro.toString(), Toast.LENGTH_LONG).show();
+                }
+            });
+
+            filaRequest.add(request);
+
         }
     }
 

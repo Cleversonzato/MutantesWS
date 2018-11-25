@@ -10,6 +10,8 @@ import android.widget.BaseAdapter;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.example.cleve.mutantesws.Mutante;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;

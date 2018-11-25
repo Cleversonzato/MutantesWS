@@ -1,7 +1,7 @@
 package com.example.cleve.mutantesws;
 
-
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -9,9 +9,17 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+
+import java.util.ArrayList;
 import java.util.List;
-public class Listar extends AppCompatActivity {
+
+public class Listar extends ListActivity {
 
     private MutantesAdapter mt;
     @Override
@@ -19,13 +27,15 @@ public class Listar extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listar);
 
-        List<Mutante> mutantes = this.listarMutantes();
+        List<Mutante> mutantes = new ArrayList();
+        Mutante mutante = new Mutante();
+        mutante.setNome("carregando...");
+        mutantes.add(mutante);
         this.mt = new MutantesAdapter(this, mutantes) {
             @Override
             public void mais(Mutante mutante) {
                 Intent it = new Intent(getApplicationContext(), Editar.class);
                 Bundle mut = new Bundle();
-                mut.putLong("id", mutante.getId());
                 mut.putString("nome", mutante.getNome());
                 it.putExtras(mut);
                 startActivityForResult(it, 1);
@@ -41,44 +51,69 @@ public class Listar extends AppCompatActivity {
             setListAdapter(this.mt);
         }
         this.mt.novosDados(mutantes);
+        this.listarMutantes();
 
     }
-    private List<Mutante> listarMutantes(){
+    private void listarMutantes(){
 
-        List<Mutante> mutantes = null;
-        OpsBD op = new OpsBD(this);
-        try{
-            op.open();
-            mutantes = op.listaMutantes();
-        } catch (Exception e){
-            e.printStackTrace();
-        } finally {
-            op.close();
-        }
-        return(mutantes);
+        final List<Mutante> mutantes = new ArrayList();
+        final MutantesAdapter tempMT = this.mt;
+
+        String url =  Volley.URL + "?operacao=listar";
+        RequestQueue filaRequest = Volley.getInstancia(this).getFilaRequest();
+        final Context contexto = this;
+
+        StringRequest request = new StringRequest(StringRequest.Method.GET, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                String[] parts = response.split("\\r?\\n");
+                Mutante mutante;
+                for(String p: parts) {
+                    mutante = new Mutante();
+                    mutante.setNome(p);
+                    mutantes.add(mutante);
+                }
+                tempMT.novosDados(mutantes);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError erro) {
+                android.widget.Toast.makeText(contexto, "Falha na conexão", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        filaRequest.add(request);
+
     }
 
     public void deletarMutante(Mutante mutante){
-        OpsBD op = new OpsBD(this);
-        try{
-            op.open();
-            op.removeMutante(mutante);
-            List<Mutante> mutantes = this.listarMutantes();
-            this.mt.novosDados(mutantes);
-        } catch (Exception e){
-            e.printStackTrace();
-        } finally {
-            op.close();
-        }
 
+        String url =  Volley.URL + "?operacao=remover&nome="+mutante.getNome();
+        RequestQueue filaRequest = Volley.getInstancia(this).getFilaRequest();
+        final Context contexto = this;
+
+        StringRequest request = new StringRequest(StringRequest.Method.GET, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                ((Listar) contexto).listarMutantes();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError erro) {
+                android.widget.Toast.makeText(contexto, "Falha na conexão", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        filaRequest.add(request);
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         if(requestCode == 1){
             if (resultCode ==1){
-                this.mt.novosDados(this.listarMutantes());
+                this.listarMutantes();
             }
 
         }
     }
+
 }

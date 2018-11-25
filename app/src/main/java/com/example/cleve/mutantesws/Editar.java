@@ -1,5 +1,6 @@
 package com.example.cleve.mutantesws;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
@@ -12,6 +13,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 
 import org.w3c.dom.Text;
 
@@ -28,6 +34,7 @@ public class Editar extends AppCompatActivity {
     private int cont =0;
     private EditText parent;
     private ConstraintLayout layout;
+    private String nomeAnterior;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,26 +45,39 @@ public class Editar extends AppCompatActivity {
         this.layout = (ConstraintLayout) findViewById(R.id.Clay);
         Intent it = getIntent();
         Bundle mut = it.getExtras();
-        this.mutante.setId(mut.getLong("id"));
         TextView nome = (EditText) findViewById(R.id.nome);
-        nome.setText(mut.getString("nome"));
+        nomeAnterior = (mut.getString("nome"));
+        nome.setText(nomeAnterior);
 
-        // banco de dados
-        List<String> poderes = new ArrayList();
-        OpsBD op = new OpsBD(this);
-        try{
-            op.open();
-            poderes = op.poderesMutante(mutante.getId());
-        } catch(Exception e){
-            e.printStackTrace();
-        }
 
-        //parte dinâmica
-        EditText et;
-        for(String p : poderes) {
-            et = this.adicionarCampo(null);
-            et.setText(p);
-        }
+     //pegar os poderes
+        final List<String> poderes = new ArrayList();
+
+        RequestQueue filaRequest = Volley.getInstancia(this).getFilaRequest();
+        final Context contexto = this;
+        String url = Volley.URL + "?operacao=pegaPoderes&nome=" + nomeAnterior;
+        StringRequest request = new StringRequest(StringRequest.Method.GET, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+               String[] parts = response.split("\\r?\\n");
+               for(String p: parts) {
+                   poderes.add(p);
+               }
+                //parte dinâmica
+                EditText et;
+                for(String p : poderes) {
+                    et = ((Editar) contexto).adicionarCampo(null);
+                    et.setText(p);
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError erro) {
+                android.widget.Toast.makeText(contexto, "Falha na conexão", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        filaRequest.add(request);
 
     }
 
@@ -85,16 +105,32 @@ public class Editar extends AppCompatActivity {
             Toast.makeText(this, "Preencha todos os campos", Toast.LENGTH_LONG).show();
         }else {
 
-            OpsBD bd = new OpsBD(this);
-            try {
-                bd.open();
-                bd.atualizaMutante(this.mutante, this);
-                setResult(1);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                bd.close();
+            RequestQueue filaRequest = Volley.getInstancia(this).getFilaRequest();
+            final Context contexto = this;
+            String url = Volley.URL + "?operacao=atualizar&nome="+mutante.getNome()+"&anterior="+this.nomeAnterior+"&habilidades=[";
+            for(String h: mutante.getPoderes()){
+                url += h+',';
             }
+            url += "] &foto=temp&usuario="+Volley.usuario;
+
+            StringRequest request = new StringRequest(StringRequest.Method.GET, url, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    if(response.equals(1)) {
+                        android.widget.Toast.makeText(contexto, "Atualizado com sucesso", Toast.LENGTH_LONG).show();
+                        ((Editar) contexto).nomeAnterior = ((Editar) contexto).mutante.getNome();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError erro) {
+                    android.widget.Toast.makeText(contexto, "Falha na conexão", Toast.LENGTH_LONG).show();
+
+                }
+            });
+
+            filaRequest.add(request);
+
         }
     }
 
